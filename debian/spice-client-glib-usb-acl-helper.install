@@ -1,0 +1,2 @@
+usr/libexec/spice-client-glib-usb-acl-helper
+usr/share/polkit-1/actions/org.spice-space.lowlevelusbaccess.policy

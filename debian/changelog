@@ -1,0 +1,639 @@
+spice-gtk (0.39-3.1) UNRELEASED; urgency=medium
+
+  * update
+
+ -- Lin Qigang <lqi254@protonmail.com>  Wed, 08 Jun 2022 13:54:11 +0800
+
+spice-gtk (0.39-3.1) unstable; urgency=medium
+
+  [ Paul Gevers ]
+  * Non-maintainer upload
+  * Add pyparsing-detection.patch (taken from upstream) to prevent FTBFS
+
+  [ Simon Chopin ]
+  * d/rules: remove the -Dcelt051=disabled option as the whole CELT
+    support has been removed upstream (Closes: #998557)
+
+ -- Paul Gevers <elbrus@debian.org>  Thu, 05 May 2022 22:15:35 +0200
+
+spice-gtk (0.39-3) unstable; urgency=medium
+
+  * debian/control: Increased debhelper-compat to 13
+  * debian/control: New maintainer
+  * debian/control: Specified rules don't require root
+  * debian/copyright: Added upstream author
+  * debian/copyright: New maintainer
+  * debian/libspice-client-glib-2.0-8.symbols: Added 0.39 symbols
+  * debian/upstream/metadata: Added upstream metadata
+
+ -- Lin Qigang <lqi254@protonmail.com>  Fri, 24 Sep 2021 23:01:28 +0700
+
+spice-gtk (0.39-2) UNRELEASED; urgency=medium
+
+  * debian/copyright: use spaces rather than tabs to start continuation lines.
+  * Use secure URI in Homepage field.
+
+ -- Debian Janitor <janitor@jelmer.uk>  Wed, 13 Jan 2021 20:17:58 -0000
+
+spice-gtk (0.39-1) unstable; urgency=medium
+
+  [ Sebastien Bacher ]
+  * debian/control:
+    - don't Build-Depends on the gstreamer1.0-doc NBS binary
+      (Closes: #970730)
+
+  [ Paul Gevers ]
+  * Set QA group as maintainer
+  * New upstream version 0.39
+    Fixes CVE-2020-14355 (Closes: #971751)
+    Drop patch, applied upstream
+  * Update Build-Depends
+  * Update copyright years
+
+ -- Paul Gevers <elbrus@debian.org>  Fri, 04 Dec 2020 18:23:44 +0100
+
+spice-gtk (0.38-2) unstable; urgency=medium
+
+  * Team upload.
+  * debian/control: Drop libdrm-dev build-dependency, not needed anymore
+  * d/p/Do-not-build-USB-redirection-on-big-endian-machines.patch: Do not
+    build USB redirection on big endian machines usbredir only supports little
+    endian, using on big endian machine won't work causing crashes.
+
+ -- Laurent Bigonville <bigon@debian.org>  Sat, 25 Apr 2020 19:10:00 +0200
+
+spice-gtk (0.38-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream release (LP: #1873693)
+    - Switch to meson buildsystem
+    - Bump spice-protocol to 0.14.1 and libusb to 1.0.21
+    - debian/libspice-client-glib-2.0-8.symbols: Add newly exported symbols
+  * debian/gbp.conf: Enable pristine-tar
+  * Stop using dpkg-statoverride in the postinst script to set setuid on
+    spice-client-glib-usb-acl-helper executable do it during the build of the
+    package, a local user can still use it to override the permissions.
+    Add a lintian override accordingly
+  * Move spice-client-glib-usb-acl-helper to /usr/libexec
+  * debian/watch: Update the URL to match the .xz tarballs
+  * debian/rules: Remove the "private" requirements from the pkg-config files,
+    these are not needed as we don't have a static library. Also adjust the
+    dependencies of the -dev packages
+
+ -- Laurent Bigonville <bigon@debian.org>  Sat, 25 Apr 2020 15:44:34 +0200
+
+spice-gtk (0.37-2) unstable; urgency=medium
+
+  * Team upload.
+  * debian/control: Mark the -dev packages as Multi-Arch: same
+  * debian/control: libva-dev is only available on linux architectures
+  * debian/control: Remove obsolete Breaks/Replaces
+  * debian/copyright: Fix the path for the spice-common files
+  * debian/control: Add libdrm-dev to the build-dependencies (Closes: #952097)
+  * debian/control: Switch form python(2) to python3 (Closes: #938549)
+  * debian/control: Bump debhelper compatibility to 12
+  * debian/control: Bump Standards-Version to 4.5.0 (no further changes)
+  * debian/rules: Set usb-ids-path to /usr/share/misc/usb.ids
+  * debian/rules: (Re)Generate the documentation during the build, add
+    gstreamer1.0-doc, libglib2.0-doc and libgdk-pixbuf2.0-doc to the builddeps
+
+ -- Laurent Bigonville <bigon@debian.org>  Tue, 17 Mar 2020 22:48:10 +0100
+
+spice-gtk (0.37-1) unstable; urgency=medium
+
+  * Team upload.
+  [ Ondřej Nový ]
+  * d/copyright: Change Format URL to correct one
+  * d/changelog: Remove trailing whitespaces
+  * d/control: Remove trailing whitespaces
+
+  [ Laurent Bigonville ]
+  * Enable upstream tarball signature verification
+  * New upstream version 0.37
+    - Initial German translation (Closes: #872283)
+  * debian/control: Adjust the {build-}dependencies
+  * debian/patches/: Drop all the patches, they were merged upstream
+  * debian/libspice-client-glib-2.0-8.symbols: Add newly exported symbols
+  * debian/control: Bump Standards-Version to 4.4.0 (no further changes)
+  * debian/*.symbols: Add the Build-Depends-Package field
+
+ -- Laurent Bigonville <bigon@debian.org>  Fri, 02 Aug 2019 17:01:10 +0200
+
+spice-gtk (0.35-2) unstable; urgency=medium
+
+  * Team upload.
+  * d/p/0002-quic-Prevent-side-effects-calling-C-macros.patch: Fix the usage
+    of byte swap macro, that should fix the FTBFS on bigendian architectures
+
+ -- Laurent Bigonville <bigon@debian.org>  Sat, 08 Sep 2018 07:32:35 +0200
+
+spice-gtk (0.35-1) unstable; urgency=medium
+
+  * Team upload.
+  * New upstream version 0.35
+    - Fix Integer overflows causing buffer overflows in spice-client (Closes:
+      #898503 CVE-2017-12194)
+  * debian/control: Update the Vcs-* fields to point to salsa
+  * debian/control: Bump build-dependencies
+  * Drop build-dependency against libgudev-1.0-dev, this is not needed with
+    libusb-1.0-0-dev >= 1.0.16, bump libusb-1.0-0-dev version accordlingly
+    (Closes: #876089)
+  * Drop d/p/explicitly-enable-subdir-objects.patch, doesn't seem needed anymore
+  * debian/rules: Remove --parallel and --with autoreconf, it's the default
+    with debhelper 10
+  * The libspice-controller library was removed upstream. Add a Breaks against
+    virt-viewer (<< 7.0), which is the only user of that library. (Closes:
+    #857367)
+  * debian/libspice-client-glib-2.0-8.symbols: Add new exported symbols
+  * debian/watch: Use https instead of plain http
+  * debian/control: Drop X-Python-Version to please lintian
+  * debian/control: Bump Standards-Version to 4.2.1 (no further changes)
+  * d/p/0001-Fix-flexible-array-buffer-overflow.patch: Fix possible buffer
+    overflow and denial of service (CVE-2018-10873) (Closes: #906316)
+
+ -- Laurent Bigonville <bigon@debian.org>  Tue, 04 Sep 2018 10:46:38 +0200
+
+spice-gtk (0.34-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Drop leftover Build-Depends on python-gtk2-dev (Closes: #885526)
+
+ -- Jeremy Bicha <jbicha@debian.org>  Sun, 13 May 2018 20:30:26 -0400
+
+spice-gtk (0.34-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * debian/rules: Call the gir sequence so the gir1.2-* packages have the
+    correct dependencies defined. (Closes: #873598)
+  * Make the gir1.2-* packages Multi-Arch: same
+  * Add Breaks to force the uninstallation of the old gir1.2-* packages
+
+ -- Laurent Bigonville <bigon@debian.org>  Wed, 30 Aug 2017 14:45:42 +0200
+
+spice-gtk (0.34-1) unstable; urgency=medium
+
+  * New upstream release
+  * debian/control:
+    - update build-deps according upstream configure.ac
+    - Bump Standards-Version to 4.0.0 (no changes)
+    - Rename gir1.2* to fix lintian warning
+    - Install gir*.typelib to multiarch directory
+    - Remove build-depends on gstreamer1.0-plugins-*(Closes: #863978)
+    - Change Depends on gstreamer1.0-plugins-* to Suggests(Closes: #849047)
+  * debian/patches:
+    - debian/patches/ssl-Rework-our-custom-BIO-type.patch, removed, applied
+      upstream
+    - debian/patches/ssl-Stop-creating-our-own-X509_LOOKUP_METHOD.patch,
+      removed, applied upstream
+    - debian/patches/ssl-Use-accessors-rather-than-direct-struct-access.patch
+      removed, applied upstream
+    - debian_843471-clipboard_Fix_crash_by_handling_error.patch, removed,
+      applied upstream
+  * debian/libspice-client-glib-2.0-8.symbols, updated
+  * Rewrite debian/rules
+
+ -- Liang Guo <guoliang@debian.org>  Sun, 06 Aug 2017 17:02:13 +0800
+
+spice-gtk (0.33-3.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * debian/rules: delete generated files to ensure they're re-generated
+    from source (Closes: #797855).
+  * Replace OpenSSL 1.1 compatibility patch with the version applied
+    upstream (Closes: #851127).
+  * debian/copyright: fix empty short license field (spotted by Lintian).
+
+ -- intrigeri <intrigeri@debian.org>  Sat, 14 Jan 2017 11:34:36 +0000
+
+spice-gtk (0.33-3.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * debian_843471-clipboard_Fix_crash_by_handling_error.patch:
+    new patch, cherry-picked from upstream (Closes: #843471).
+
+ -- intrigeri <intrigeri@debian.org>  Sun, 25 Dec 2016 08:30:43 +0000
+
+spice-gtk (0.33-3.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix FTBFS with OpenSSL 1.1, patch by Sebastian Andrzej Siewior (Closes:
+    #828554).
+
+ -- Andrey Rahmatullin <wrar@debian.org>  Sat, 10 Dec 2016 20:06:07 +0500
+
+spice-gtk (0.33-3) unstable; urgency=medium
+
+  * debian/control:
+    - Add gstreamer1.0-tools, gstreamer1.0-libav and gstreamer1.0-plugins-*
+      to Build-Depends (Closes: #841932)
+    - Add gstreamer1.0-libav and gstreamer1.0-plugins-* to
+      libspice-client-glib-2.0-8 Depends
+  * debian/rules
+    - Remove dh_strip on python-spice-client-gtk, package already removed
+  * Install missed docs
+
+ -- Liang Guo <guoliang@debian.org>  Tue, 25 Oct 2016 10:00:32 +0800
+
+spice-gtk (0.33-2) unstable; urgency=medium
+
+  * debian/control:
+    - Add libphodav-2.0-dev to Build-Depends, enable webdav
+      support (Closes: #841764)
+    - Add libgstreamer1.0-dev and libgstreamer-plugins-base1.0-dev
+      to Build-Depends, enable gstreamer support
+
+ -- Liang Guo <guoliang@debian.org>  Mon, 24 Oct 2016 20:06:17 +0800
+
+spice-gtk (0.33-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #840603)
+  * debian/control:
+    - Update Build-Depends on spice-protocol to 0.12.12
+  * debian/patches:
+    - Refresh explicitly-enable-subdir-objects.patch
+  * Refresh libspice-client-glib-2.0-8.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 07 Oct 2016 23:14:27 +0800
+
+spice-gtk (0.32-1) unstable; urgency=medium
+
+  * New upstream release
+  * Update debian/copyright
+  * debian/control:
+    - Update Build-Depends libglib2.0-dev and libspice-protocol-dev
+      version required
+    - Remove Build-Depends on libgtk2.0-dev
+    - Bump Standards-Version to 3.9.8 (no changes)
+    - Use secure uri in vcs-*
+  * Remove libspice-client-gtk-2.0-* and python-spice-client-gtk,
+    upstream don't support gtk2 anymore
+  * Refresh explicitly-enable-subdir-objects.patch
+  * Bump SONAME and package name of libspice-client-gtk-3.0
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 01 Jul 2016 19:32:58 +0800
+
+spice-gtk (0.30-1) unstable; urgency=low
+
+  * New upstream release (Closes: #806294, #808504)
+  * Enable python checks
+  * Update debian/copyright, remove license about upstream
+    removed files
+  * Spice-protocol is splited to sperate package, add build-depends on
+    libspice-protocol-dev
+  * Refresh debian/patches/explicitly-enable-subdir-objects.patch
+  * Refresh libspice-client-glib-2.0-8.symbols
+  * switch to automatic dbgsym package.
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 25 Dec 2015 14:47:11 +0800
+
+spice-gtk (0.29-1) unstable; urgency=medium
+
+  * New upstream release
+  * Update explicitly-enable-subdir-objects.patch, source directory changed from
+    gtk to src
+  * Update debian/copyright, source directory changed from gtk to src
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 29 Aug 2015 11:44:44 +0800
+
+spice-gtk (0.28-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Drop libspice-server-dev dependencies from libspice-client-glib-2.0-dev
+    it's not needed and block the migration to testing because it's not
+    available on some architectures (Closes: #792407)
+  * Enable smartcard support (Closes: #786835)
+
+ -- Laurent Bigonville <bigon@debian.org>  Mon, 24 Aug 2015 20:57:27 +0200
+
+spice-gtk (0.28-1) unstable; urgency=low
+
+  * New upstream release
+  * Update debian/copyright
+  * Add build-depends on gtk-doc
+  * Enable LZ4 support
+  * Update libspice-client-glib-2.0-8.symbols
+  * Update spice-client-glib-usb-acl-helper description
+  * Added spice-gtk-dbg package (Closes:783463)
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 25 Apr 2015 14:29:58 +0800
+
+spice-gtk (0.26-2) experimental; urgency=medium
+
+  * build on all archtecture,not only linux
+
+ -- Liang Guo <guoliang@debian.org>  Wed, 12 Nov 2014 14:38:12 +0800
+
+spice-gtk (0.26-1) experimental; urgency=medium
+
+  * New upstream release
+  * Build on all archtecture (Closes: 747082)
+  * Remove debian/patches/remove-srcdir-or-top-srcdir-in-makefile-am.patch,
+    Applied upstream
+  * Bump Standards-Version to 3.9.6 (no changes)
+  * Update debian/copyright, remove license about upstream
+    removed files.
+
+ -- Liang Guo <guoliang@debian.org>  Mon, 10 Nov 2014 19:15:57 +0800
+
+spice-gtk (0.25-1) unstable; urgency=medium
+
+  * New upstream release
+  * Refresh debian/copyright, new file added
+  * debian/patches:
+    - - remove-srcdir-or-top-srcdir-in-makefile-am.patch, refresh
+    - explicitly-enable-subdir-objects.patch, refresh
+    - do-not-build-tests.patch, remove, upstream provide option to
+      disable tests build
+  * Add build-depends on libsoup2.4-dev
+  * Refresh libspice-client-glib-2.0-8.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Wed, 25 Jun 2014 07:53:38 +0800
+
+spice-gtk (0.23-1) unstable; urgency=low
+
+  * New upstream release
+  * Refresh debian/copyright, new file added
+  * debian/patches:
+    - make-celt-to-be-optional.patch, remove, upstream
+      have similar patch
+    - remove-srcdir-or-top-srcdir-in-makefile-am.patch, refresh
+  * Enable opus
+
+ -- Liang Guo <guoliang@debian.org>  Sun, 16 Feb 2014 21:05:01 +0800
+
+spice-gtk (0.22-0nocelt2) unstable; urgency=medium
+
+  * Enable dbus support (Closes: 737663)
+  * Remove build-depends on libspice-protocol-dev
+    and libspice-server-dev, not needed.
+  * Add build-depends on libssl-dev
+
+ -- Liang Guo <guoliang@debian.org>  Wed, 05 Feb 2014 11:50:40 +0800
+
+spice-gtk (0.22-0nocelt1) unstable; urgency=low
+
+  * New upstream release
+  * Bump Standards-Version to 3.9.5 (no changes)
+  * debian/patches:
+    - make-celt-to-be-optional.patch, refresh
+    - explicitly-enable-subdir-objects.patch, refresh
+    - remove-srcdir-or-top-srcdir-in-makefile-am.patch, refresh
+    - fix-usbredir-being-broken-since-commit-159c6ebf.patch, remove,
+      applied upstream
+    - palette-regression.patch, remove, applied upstream
+    - do-not-build-tests.patch, add
+  * Refresh *.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Sun, 19 Jan 2014 10:59:06 +0800
+
+spice-gtk (0.21-0nocelt3) unstable; urgency=low
+
+  * debian/atches:
+    - palette-regression.patch, add, (Closes: 727707)
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 09 Nov 2013 00:18:33 +0800
+
+spice-gtk (0.21-0nocelt2) unstable; urgency=low
+
+  * debian/patches:
+    - fix-usbredir-being-broken-since-commit-159c6ebf.patch,
+      add, (Closes:  726292)
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 18 Oct 2013 17:40:05 +0800
+
+spice-gtk (0.21-0nocelt1) unstable; urgency=low
+
+  * New upstream release (Closes: 724473)
+  * debian/patches:
+    - make-celt-to-be-optional.patch, refresh
+    - add-spice_channel_string_to_type-to-map-files.patch,
+      remove, applied upstream
+    - explicitly-enable-subdir-objects.patch, new, or
+      compile with automake 1.14 will fail
+    - remove-srcdir-or-top-srcdir-in-makefile-am.patch, new.
+  * Refresh debian/libspice-client-gtk-{2,3}.0-4.symbols
+  * set spice-client-glib-usb-acl-helper replaces and breaks
+    libspice-client-glib-2.0-1, which is in wheezy
+    (Closes: #718962, #722533)
+
+ -- Liang Guo <guoliang@debian.org>  Thu, 26 Sep 2013 09:25:56 +0800
+
+spice-gtk (0.20-0nocelt3) unstable; urgency=low
+
+  * set spice-client-glib-usb-acl-helper replaces
+    libspice-client-glib-2.0-8 too (Closes: #718962)
+
+ -- Liang Guo <guoliang@debian.org>  Thu, 08 Aug 2013 00:18:19 +0800
+
+spice-gtk (0.20-0nocelt2) unstable; urgency=low
+
+  * set spice-client-glib-usb-acl-helper breaks
+    libspice-client-glib-2.0-8 (<< 0.20-0nocelt1) (Closes: #718962)
+  * move libspice-client-glib-2.0-8.post* to
+    spice-client-glib-usb-acl-helper.post* (Closes: #718964,#718986)
+
+ -- Liang Guo <guoliang@debian.org>  Wed, 07 Aug 2013 22:04:28 +0800
+
+spice-gtk (0.20-0nocelt1) unstable; urgency=low
+
+  * New upstream release (Closes: 717718)
+  * Remove depends on libvala-0.16-dev (Closes: 709694)
+  * Bump Standards-Version to 3.9.4
+  * debian/control:
+    - Bump Standards-Version to 3.9.4 (no changes)
+    - Update VCS-* to use canonical URIs
+    - Remove conflicts on old ABI (Closes: 712587)
+  * Refresh libspice-client-glib-2.0-8.symbols
+  * debian/patches:
+    - make-celt-to-be-optional.patch, refresh
+    - add-spice_channel_string_to_type-to-map-files.patch, add
+  * Split usb acl helper to separate package (Closes: 704525)
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 03 Aug 2013 01:33:13 +0800
+
+spice-gtk (0.19-0nocelt3) unstable; urgency=low
+
+  * Switch from valac-0.18 to valac (>= 0.18) (Closes: #709036)
+
+ -- Liang Guo <guoliang@debian.org>  Sun, 26 May 2013 13:10:16 +0800
+
+spice-gtk (0.19-0nocelt2) unstable; urgency=low
+
+  * Upload to unstable
+  * Remove clearenv-in-usb-acl-helper.patch, applied upstream
+  * Switch from valac-0.16 to valac-0.18 (Closes: #707464)
+
+ -- Liang Guo <guoliang@debian.org>  Sun, 12 May 2013 18:54:51 +0800
+
+spice-gtk (0.19-0nocelt1exq) experimental; urgency=low
+
+  * New upstream release
+  * Rename spicy-snapshot to spicy-screenshot, upstream
+    had rename snappy to spicy-screenshot
+  * Optimize debian/rules
+  * Set spice-client-gtk depends on the same version of
+    libspice-client-glib and libspice-client-gtk (Closes: #703413)
+  * Set spice-client-gtk depends on libusbredirhost1 (>= 0.6)
+  * Refresh libspice-client-glib-2.0-8.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Thu, 11 Apr 2013 23:30:35 +0800
+
+spice-gtk (0.18-0nocelt1exp) experimental; urgency=low
+
+  * New upstream release (Closes: #700562)
+  * Refresh debian/patches/make-celt-to-be-optional.patch
+  * Refresh debian/libspice-client-glib-2.0-8.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 02 Mar 2013 08:34:12 +0800
+
+spice-gtk (0.16-0nocelt1exp) experimental; urgency=low
+
+  * New upstream release
+  * Refresh debian/libspice-client-glib-2.0-8.symbols
+  * Refresh debian/patches/make-celt-to-be-optional.patch
+
+ -- Liang Guo <guoliang@debian.org>  Sat, 12 Jan 2013 20:17:31 +0800
+
+spice-gtk (0.14-1) experimental; urgency=low
+
+  * New upstream release
+  * debian/patches:
+    - Refresh make-celt-to-be-optional.patch
+  * Refresh debian/*.symbols
+
+ -- Liang Guo <guoliang@debian.org>  Wed, 10 Oct 2012 12:44:10 +0800
+
+spice-gtk (0.13-1) experimental; urgency=low
+
+  * New upstream release
+  * debian/patches:
+    - Remove fix-parsing-uri-query.patch, applied upstream
+    - Remove fix-spice-audio-binding.patch, applied upstream
+    - Refresh make-celt-to-be-optional.patch
+  * Bump SONAME and package name
+  * Refresh symbols
+
+ -- Liang Guo <guoliang@debian.org>  Tue, 04 Sep 2012 14:15:17 +0800
+
+spice-gtk (0.12-5) unstable; urgency=high
+
+  * Add patch clearenv-in-usb-acl-helper.patch (Closes: #689155)
+
+ -- Liang Guo <guoliang@debian.org>  Mon, 01 Oct 2012 21:30:21 +0800
+
+spice-gtk (0.12-4) unstable; urgency=low
+
+  * Correct version problem in *.pc (Closes: #680290)
+
+ -- Liang Guo <guoliang@debian.org>  Mon, 09 Jul 2012 00:36:14 +0800
+
+spice-gtk (0.12-3) unstable; urgency=low
+
+  * Add patch make-celt-to-be-optional.patch
+  * Disable celt
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 29 Jun 2012 01:37:37 +0800
+
+spice-gtk (0.12-2) unstable; urgency=low
+
+  * Enable usb redirect (Closes: #677662)
+  * Switch to vala 0.16 (Closes: #675665)
+  * Enable multiarch for libspice-client-glib-2.0-1,
+    libspice-client-gtk-2.0-1, libspice-client-gtk-3.0-1
+  * Build with hardening flags
+  * Use dpkg-statoverride to handle setuid bits
+
+ -- Liang Guo <guoliang@debian.org>  Fri, 25 May 2012 21:52:45 +0800
+
+spice-gtk (0.12-1) unstable; urgency=low
+
+  * New upstream release
+  * Update debian/copyright, file moved
+    - common -> spice-common/common
+    - spice-protocol -> spice-common/spice-protocol
+  * debian/patches:
+    - Refresh debian/patches/remove-libjpeg-turbo-warning.patch
+    - Add fix-parsing-uri-query.patch
+    - Add fix-spice-audio-binding.patch
+  * Refresh debian/libspice-client-glib-2.0-1.symbols, new function added
+
+ -- Liang Guo <bluestonechina@gmail.com>  Thu, 03 May 2012 09:45:49 +0800
+
+spice-gtk (0.11-1) unstable; urgency=low
+
+  * New upstream release (Closes: #667569)
+  * Update debian/copyright, new file added
+  * Bump Standards-Version to 3.9.3, no changes needed
+  * Refresh debian/libspice-client-glib-2.0-1.symbols
+  * Update debian/rules, build spice-gtk in a subdirectory
+  * Include missed .deps and .vapi files in libspice-client-gtk-2.0-dev
+  * Add libtext-csv-perl to Build-Depends
+
+ -- Liang Guo <bluestonechina@gmail.com>  Fri, 06 Apr 2012 21:22:13 +0800
+
+spice-gtk (0.9-1) unstable; urgency=low
+
+  [ Jeremy Bicha ]
+  * New upstream release.
+    - add USB redirection support, see Hans comments in the log and that
+      post for details: http://hansdegoede.livejournal.com/11084.html
+    - introduce SpiceGtkSession to deal with session-wide Gtk events, such
+      as clipboard, instead of doing it per display
+    - many cursor and keyboard handling improvements
+    - handle the new "semi-seamless" migration
+    - support new Spice mini-headers
+    - better coroutines: fibers on windows & jmp on linux
+    - add Vala vapi bindings generation
+    - Add command line options for setting the cache size and the glz
+      window size
+    - Add a USB device selection widget to libspice-client-gtk
+    - many bug fixes and code improvements
+  * Update symbols and bump libspice-client-glib-2.0 soname back to 1
+  * Enable vala bindings
+  * debian/control:
+    - Build-depend on libusb-1.0, libgudev, valac and libvala-dev
+    - Bump build-depends on spice-protocol to 0.10.1
+  * debian/rules: Disable usbredir support since the library isn't in
+    Debian yet
+
+  [ Liang Guo ]
+  * debian/copyright:
+    - Add gtk/coroutine_winfibers.c
+    - Add gtk/spice-client-glib-usb-acl-helper.c
+    - Remove common/win/my_getopt-1.5/*, not in upstream any more
+  * debian/rules:
+    - Remove vapi/Makefile in clean target
+  * debian/control:
+    - Replace libspice-client-glib-2.0-4 with libspice-client-glib-2.0-1
+
+ -- Liang Guo <bluestonechina@gmail.com>  Wed, 01 Feb 2012 14:38:05 +0800
+
+spice-gtk (0.7-3) unstable; urgency=low
+
+  * Enable introspection support
+  * Don't lock into particular python version (Closes: #639936)
+  * Add libpixman-1-dev, libspice-server-dev, libspice-protocol-dev
+    and libssl-dev to libspice-client-glib-2.0-dev Depends (Closes: #640138)
+  * Add libgtk2.0-dev and libspice-client-glib-2.0-dev to
+    libspice-client-gtk-2.0-dev Depends
+  * Add libgtk-3-dev and libspice-client-glib-2.0-dev to
+    libspice-client-gtk-3.0-dev Depends (Closes: #640136)
+  * Update debian/copyright fix some lintian warning
+  * Use dh_python2 to handle python module (Closes: #644090)
+
+ -- Liang Guo <bluestonechina@gmail.com>  Fri, 07 Oct 2011 22:25:53 +0800
+
+spice-gtk (0.7-2) unstable; urgency=low
+
+  * Rename snappy to spicy-snapshot (Closes: #637983)
+  * Remove spice-protocol.vapi from libspice-client-gtk-2.0-dev
+    (Closes: #637982)
+  * Check only versions start with number, ignore spice-gtk-LATEST.tar.bz2
+
+ -- Liang Guo <bluestonechina@gmail.com>  Tue, 16 Aug 2011 18:24:32 +0800
+
+spice-gtk (0.7-1) unstable; urgency=low
+
+  * Initial release (Closes: #632866)
+
+ -- Liang Guo <bluestonechina@gmail.com>  Sun, 14 Aug 2011 15:36:28 +0800

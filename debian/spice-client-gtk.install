@@ -1,0 +1,5 @@
+usr/bin/spicy
+usr/bin/spicy-screenshot
+usr/bin/spicy-stats
+usr/share/locale/*
+usr/share/man/man1/spice-client.1
