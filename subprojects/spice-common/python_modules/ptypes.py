@@ -18,7 +18,7 @@ def get_named_types():
 # only to attributes that affect pointer or array attributes, as these
 # are member local types, unlike e.g. a Struct that may be used by
 # other members
-propagated_attributes=["ptr_array", "nonnull", "chunk"]
+propagated_attributes=["ptr_array", "nonnull", "chunk", "zero_terminated"]
 
 valid_attributes_generic=set([
     # embedded/appended at the end of the resulting C structure
@@ -86,6 +86,16 @@ attributes_with_arguments=set([
     'virtual',
 ])
 
+# these attributes specify output format, only one can be set
+output_attributes = set([
+    'end',
+    'to_ptr',
+    'as_ptr',
+    'ptr_array',
+    'zero',
+    'chunk',
+])
+
 def fix_attributes(attribute_list, valid_attributes=valid_attributes_generic):
     attrs = {}
     for attr in attribute_list:
@@ -100,9 +110,8 @@ def fix_attributes(attribute_list, valid_attributes=valid_attributes_generic):
             raise Exception("Attribute %s has more than 1 argument" % name)
         attrs[name] = lst
 
-    # these attributes specify output format, only one can be set
-    output_attrs = set(['end', 'to_ptr', 'as_ptr', 'ptr_array', 'zero', 'chunk'])
-    if len(output_attrs.intersection(attrs.keys())) > 1:
+    # only one output attribute can be set
+    if len(output_attributes.intersection(attrs.keys())) > 1:
         raise Exception("Multiple output type attributes specified %s" % output_attrs)
 
     return attrs
@@ -448,11 +457,6 @@ class ArrayType(Type):
             return False
         return self.size[0] == "image_size"
 
-    def is_bytes_length(self):
-        if isinstance(self.size, int) or isinstance(self.size, str):
-            return False
-        return self.size[0] == "bytes"
-
     def is_cstring_length(self):
         if isinstance(self.size, int) or isinstance(self.size, str):
             return False
@@ -497,6 +501,16 @@ class ArrayType(Type):
         return self.element_type.c_type()
 
     def check_valid(self, member):
+        # If the size is not constant the array has to be allocated in some
+        # way in the output and so there must be a specification for the
+        # output (as default is write into the C structure all data).
+        # The only exceptions are when the length is constant (in this case
+        # a constant length array in the C structure is used) or a pointer
+        # (in this case the pointer allocate the array).
+        if (not self.is_constant_length()
+            and len(output_attributes.intersection(member.attributes.keys())) == 0
+            and not member.member_type.is_pointer()):
+            raise Exception("Array length must be a constant or some output specifiers must be set")
         # These attribute corresponds to specific structure size
         if member.has_attr("chunk") or member.has_attr("as_ptr"):
             return
@@ -539,6 +553,8 @@ class ArrayType(Type):
             return writer.writeln('%s *%s[0];' % (self.c_type(), name))
         if member.has_end_attr():
             return writer.writeln('%s %s[0];' % (self.c_type(), name))
+        if self.is_constant_length() and self.has_attr("zero_terminated"):
+            return writer.writeln('%s %s[%s];' % (self.c_type(), name, self.size + 1))
         if self.is_constant_length():
             return writer.writeln('%s %s[%s];' % (self.c_type(), name, self.size))
         if self.is_identifier_length():
@@ -627,6 +643,8 @@ class Member(Containee):
         for i in propagated_attributes:
             if self.has_attr(i):
                 self.member_type.attributes[i] = self.attributes[i]
+                if self.member_type.is_pointer():
+                    self.member_type.target_type.attributes[i] = self.attributes[i]
         return self
 
     def contains_member(self, member):

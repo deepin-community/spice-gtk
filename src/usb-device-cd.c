@@ -30,6 +30,7 @@
 #include <libusb.h>
 #include <fcntl.h>
 
+#define HAVE_PHYSICAL_CD 1
 #ifdef G_OS_WIN32
 #include <windows.h>
 #include <ntddcdrm.h>
@@ -37,8 +38,15 @@
 #else
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#if defined(__APPLE__) && defined(HAVE_SYS_DISK_H)
+#include <sys/disk.h>
+#include <fcntl.h>
+#elif defined(__linux__)
 #include <linux/fs.h>
 #include <linux/cdrom.h>
+#else
+#undef HAVE_PHYSICAL_CD
+#endif
 #endif
 
 #include "usb-emulation.h"
@@ -51,7 +59,9 @@ typedef struct SpiceCdLU {
     uint64_t size;
     uint32_t blockSize;
     uint32_t loaded : 1;
+#ifdef HAVE_PHYSICAL_CD
     uint32_t device : 1;
+#endif
 } SpiceCdLU;
 
 #define MAX_LUN_PER_DEVICE              1
@@ -94,7 +104,9 @@ typedef struct SpiceUsbEmulatedDevice UsbCd;
 
 static int cd_device_open_stream(SpiceCdLU *unit, const char *filename)
 {
+#ifdef HAVE_PHYSICAL_CD
     unit->device = 0;
+#endif
 
     if (!unit->filename && !filename) {
         SPICE_DEBUG("%s: file name not provided", __FUNCTION__);
@@ -115,13 +127,31 @@ static int cd_device_open_stream(SpiceCdLU *unit, const char *filename)
     }
 
     struct stat file_stat = { 0 };
+#ifdef HAVE_PHYSICAL_CD
     if (fstat(fd, &file_stat) || file_stat.st_size == 0) {
         file_stat.st_size = 0;
         unit->device = 1;
+#ifdef __APPLE__
+        uint64_t sector_count = 0;
+        uint32_t sector_size = 0;
+
+        if (!ioctl(fd, DKIOCGETBLOCKCOUNT, &sector_count) &&
+            !ioctl(fd, DKIOCGETBLOCKSIZE, &sector_size)) {
+            file_stat.st_size = sector_count;
+            unit->blockSize = sector_size;
+        }
+#else
         if (!ioctl(fd, BLKGETSIZE64, &file_stat.st_size) &&
             !ioctl(fd, BLKSSZGET, &unit->blockSize)) {
         }
+#endif
     }
+#else // HAVE_PHYSICAL_CD
+    if (fstat(fd, &file_stat) != 0) {
+        SPICE_DEBUG("%s: can't run stat on %s", __FUNCTION__, unit->filename);
+        return -1;
+    }
+#endif
     unit->size = file_stat.st_size;
     close(fd);
     if (unit->size) {
@@ -137,6 +167,8 @@ static int cd_device_open_stream(SpiceCdLU *unit, const char *filename)
     return 0;
 }
 
+#ifdef HAVE_PHYSICAL_CD
+
 static int cd_device_load(SpiceCdLU *unit, gboolean load)
 {
     int error;
@@ -147,12 +179,22 @@ static int cd_device_load(SpiceCdLU *unit, gboolean load)
     if (fd < 0) {
         return -1;
     }
+#ifdef __APPLE__
+    if (load) {
+        // MacOS has no load command, device is created when there's a CD/DVD
+        error = -1;
+        errno = ENOSYS;
+    } else {
+        error = ioctl(fd, DKIOCEJECT, NULL);
+    }
+#else
     if (load) {
         error = ioctl(fd, CDROMCLOSETRAY, 0);
     } else {
         ioctl(fd, CDROM_LOCKDOOR, 0);
         error = ioctl(fd, CDROMEJECT, 0);
     }
+#endif
     if (error) {
         // note that ejecting might be available only for root
         // loading might be available also for regular user
@@ -173,17 +215,24 @@ static int cd_device_check(SpiceCdLU *unit)
     if (fd < 0) {
         return -1;
     }
+#ifdef __APPLE__
+    // in MacOS device is not created if not present
+    error = 0;
+#else
     error = ioctl(fd, CDROM_DRIVE_STATUS, 0);
     error = (error == CDS_DISC_OK) ? 0 : -1;
     if (!error) {
         error = ioctl(fd, CDROM_DISC_STATUS, 0);
         error = (error == CDS_DATA_1) ? 0 : -1;
     }
+#endif
     close(fd);
     return error;
 }
 
-#else
+#endif // HAVE_PHYSICAL_CD
+
+#else // G_OS_WIN32
 
 static gboolean is_device_name(const char *filename)
 {
@@ -349,6 +398,7 @@ static void close_stream(SpiceCdLU *unit)
 static gboolean load_lun(UsbCd *d, int unit, gboolean load)
 {
     gboolean b = TRUE;
+#ifdef HAVE_PHYSICAL_CD
     if (load && d->units[unit].device) {
         // there is one possible problem in case our backend is the
         // local CD device and it is ejected
@@ -358,6 +408,7 @@ static gboolean load_lun(UsbCd *d, int unit, gboolean load)
             return FALSE;
         }
     }
+#endif
 
     if (load) {
         CdScsiMediaParameters media_params = { 0 };

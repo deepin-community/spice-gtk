@@ -735,13 +735,13 @@ static const GtkActionEntry entries[] = {
         .stock_id    = "edit-copy",
         .label       = "_Copy to guest",
         .callback    = G_CALLBACK(menu_cb_copy),
-        .accelerator = "", /* none (disable default "<control>C") */
+        .accelerator = "<shift>F5",
     },{
         .name        = "PasteFromGuest",
         .stock_id    = "edit-paste",
         .label       = "_Paste from guest",
         .callback    = G_CALLBACK(menu_cb_paste),
-        .accelerator = "", /* none (disable default "<control>V") */
+        .accelerator = "<shift>F6",
     },{
 
         /* View menu */
@@ -1899,6 +1899,9 @@ static void connection_disconnect(spice_connection *conn)
 static void connection_destroy(SpiceSession *session,
                                spice_connection *conn)
 {
+    for (int i = 0; i < SPICE_N_ELEMENTS(conn->wins); i++) {
+        destroy_spice_window(conn->wins[i]);
+    }
     g_object_unref(conn->session);
     g_hash_table_unref(conn->transfers);
     g_free(conn);

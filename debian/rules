@@ -1,24 +1,28 @@
 #!/usr/bin/make -f
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,-O1 -Wl,-z,defs
+export DPKG_GENSYMBOLS_CHECK_LEVEL = 4
+
+ifneq ($(DEB_HOST_ARCH_OS),linux)
+conf_flags += -Dlibcap-ng=disabled
+endif
+
 %:
-	dh $@ --with gir
+	dh $@
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
-                -Dsmartcard=enabled -Dgtk=enabled \
-                -Dintrospection=enabled -Dvapi=enabled \
-                -Dusbredir=enabled -Dpolkit=enabled \
-                -Dlz4=enabled -Dgtk_doc=enabled \
-                -Dusb-acl-helper-dir=/usr/libexec \
-                -Dusb-ids-path=/usr/share/misc/usb.ids
+		-Dauto_features=enabled \
+		-Dusb-acl-helper-dir=/usr/libexec \
+		-Dusb-ids-path=/usr/share/misc/usb.ids \
+		$(conf_flags)
 
-override_dh_auto_install:
-	dh_auto_install
+execute_after_dh_auto_install:
 # Drop the private requirement as we don't have a static library and it makes
 # the dependency list longer
 	sed -E -i '/^(Libs|Requires)\.private:/D' debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/spice-client-glib-2.0.pc
 	sed -E -i '/^(Libs|Requires)\.private:/D' debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/spice-client-gtk-3.0.pc
 
-override_dh_fixperms:
-	dh_fixperms
+execute_after_dh_fixperms:
 	chmod 4755 debian/spice-client-glib-usb-acl-helper/usr/libexec/spice-client-glib-usb-acl-helper

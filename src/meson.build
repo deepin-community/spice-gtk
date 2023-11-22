@@ -146,7 +146,7 @@ endif
 
 if spice_gtk_coroutine == 'gthread'
   spice_client_glib_sources += 'coroutine_gthread.c'
-elif spice_gtk_coroutine == 'ucontext'
+elif spice_gtk_coroutine in ['ucontext', 'libucontext']
   spice_client_glib_sources += ['continuation.c',
                                 'continuation.h',
                                 'coroutine_ucontext.c']
@@ -193,9 +193,9 @@ endif
 
 # soversion
 # http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-spice_client_glib_current = 15
-spice_client_glib_revision = 0
-spice_client_glib_age = 7
+spice_client_glib_current = 16
+spice_client_glib_revision = 2
+spice_client_glib_age = 8
 spice_client_glib_so_version = '@0@.@1@.@2@'.format(spice_client_glib_current - spice_client_glib_age,
                                                     spice_client_glib_age,
                                                     spice_client_glib_revision)
@@ -300,7 +300,6 @@ if spice_gtk_has_gtk
   endif
 
   # keymaps
-  python = import('python').find_installation()
   keymaps = ['xorgevdev',
              'xorgkbd',
              'xorgxquartz',
@@ -312,7 +311,7 @@ if spice_gtk_has_gtk
   foreach keymap : keymaps
     varname = 'keymap_@0@2xtkbd'.format(keymap)
     target = 'vncdisplay@0@.h'.format(varname)
-    cmd = [python, keymapgen, '--lang', 'glib2', '--varname', varname, 'code-map', keymapcsv, keymap, 'xtkbd']
+    cmd = [keymapgen, 'code-map', '--lang', 'glib2', '--varname', varname, keymapcsv, keymap, 'xtkbd']
     spice_client_gtk_sources += custom_target(target,
                                               output : target,
                                               capture : true,
@@ -328,18 +327,6 @@ if spice_gtk_has_gtk
     generated_protocols = [
       [ 'pointer-constraints', 'v1' ],
       [ 'relative-pointer', 'v1' ],
-     #[ 'input-method', 'v1' ],
-     #[ 'input-timestamps', 'v1' ],
-     #[ 'fullscreen-shell', 'v1' ],
-     #[ 'linux-dmabuf', 'v1' ],
-     #[ 'linux-explicit-synchronization', 'v1' ],
-     #[ 'presentation-time', 'stable' ],
-     #[ 'tablet', 'v2' ],
-     #[ 'text-input', 'v1' ],
-     #[ 'viewporter', 'stable' ],
-     #[ 'xdg-output', 'v1' ],
-     #[ 'xdg-shell', 'v6' ],
-     #[ 'xdg-shell', 'stable' ],
     ]
 
     foreach proto: generated_protocols
@@ -394,9 +381,9 @@ if spice_gtk_has_gtk
 
   # soversion
   # http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-  spice_client_gtk_current = 5
-  spice_client_gtk_revision = 0
-  spice_client_gtk_age = 0
+  spice_client_gtk_current = 6
+  spice_client_gtk_revision = 1
+  spice_client_gtk_age = 1
   spice_client_gtk_so_version = '@0@.@1@.@2@'.format(spice_client_gtk_current - spice_client_gtk_age,
                                                      spice_client_gtk_age,
                                                      spice_client_gtk_revision)

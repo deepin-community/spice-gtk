@@ -73,7 +73,8 @@
  * The widget will optionally grab the keyboard and the mouse when
  * focused if the properties #SpiceDisplay:grab-keyboard and
  * #SpiceDisplay:grab-mouse are #TRUE respectively.  It can be
- * ungrabbed with spice_display_mouse_ungrab(), and by setting a key
+ * ungrabbed with spice_display_keyboard_ungrab() and
+ * spice_display_mouse_ungrab(), and by setting a key
  * combination with spice_display_set_grab_keys().
  *
  * Finally, spice_display_get_pixbuf() will take a screenshot of the
@@ -259,7 +260,7 @@ static gint get_display_id(SpiceDisplay *display)
 
 static bool egl_enabled(SpiceDisplayPrivate *d)
 {
-#if HAVE_EGL
+#ifdef HAVE_EGL
     return d->egl.enabled;
 #else
     return false;
@@ -601,7 +602,7 @@ static void grab_notify(SpiceDisplay *display, gboolean was_grabbed)
         release_keys(display);
 }
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
 static gboolean
 gl_area_render(GtkGLArea *area, GdkGLContext *context, gpointer user_data)
 {
@@ -667,7 +668,7 @@ static void spice_display_init(SpiceDisplay *display)
     gtk_stack_add_named(d->stack, area, "draw-area");
     gtk_stack_set_visible_child(d->stack, area);
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     area = gtk_gl_area_new();
     gtk_gl_area_set_required_version(GTK_GL_AREA(area), 3, 2);
     gtk_gl_area_set_auto_render(GTK_GL_AREA(area), false);
@@ -1364,7 +1365,7 @@ static void recalc_geometry(GtkWidget *widget)
     gint scale_factor, height_mm = 0, width_mm = 0;
     bool has_display_mm = false;
 
-    if (spice_cairo_is_scaled(display))
+    if (spice_allow_scaling(display))
         zoom = (gdouble)d->zoom_level / 100;
 
     scale_factor = gtk_widget_get_scale_factor(GTK_WIDGET(display));
@@ -1378,9 +1379,11 @@ static void recalc_geometry(GtkWidget *widget)
         width_mm = gdk_monitor_get_width_mm(monitor);
         gdk_monitor_get_geometry(monitor, &geometry);
         /* FIXME: gives wrong results atm: https://gitlab.gnome.org/GNOME/gtk/-/issues/3066 */
-        width_mm = (width_mm * d->ww / geometry.width) / zoom * scale_factor;
-        height_mm = (height_mm * d->wh / geometry.height) / zoom * scale_factor;
-        has_display_mm = true;
+        if (geometry.width > 0 && geometry.height > 0) {
+            width_mm = (width_mm * d->ww / geometry.width) / zoom * scale_factor;
+            height_mm = (height_mm * d->wh / geometry.height) / zoom * scale_factor;
+            has_display_mm = true;
+        }
     }
 
     DISPLAY_DEBUG(display,
@@ -1453,7 +1456,7 @@ static gboolean do_color_convert(SpiceDisplay *display, GdkRectangle *r)
     return true;
 }
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
 static void set_egl_enabled(SpiceDisplay *display, bool enabled)
 {
     SpiceDisplayPrivate *d = display->priv;
@@ -1492,7 +1495,7 @@ static gboolean draw_event(GtkWidget *widget, cairo_t *cr, gpointer data)
     SpiceDisplayPrivate *d = display->priv;
     g_return_val_if_fail(d != NULL, false);
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     if (egl_enabled(d) &&
         g_str_equal(gtk_stack_get_visible_child_name(d->stack), "draw-area")) {
         spice_egl_update_display(display);
@@ -2034,6 +2037,8 @@ static int button_gdk_to_spice(guint gdk)
         [ 3 ] = SPICE_MOUSE_BUTTON_RIGHT,
         [ 4 ] = SPICE_MOUSE_BUTTON_UP,
         [ 5 ] = SPICE_MOUSE_BUTTON_DOWN,
+        [ 8 ] = SPICE_MOUSE_BUTTON_SIDE,
+        [ 9 ] = SPICE_MOUSE_BUTTON_EXTRA,
     };
 
     if (gdk < SPICE_N_ELEMENTS(map)) {
@@ -2048,6 +2053,8 @@ static int button_gdk_to_spice_mask(guint gdk)
         [1] = SPICE_MOUSE_BUTTON_MASK_LEFT,
         [2] = SPICE_MOUSE_BUTTON_MASK_MIDDLE,
         [3] = SPICE_MOUSE_BUTTON_MASK_RIGHT,
+        [8] = SPICE_MOUSE_BUTTON_MASK_SIDE,
+        [9] = SPICE_MOUSE_BUTTON_MASK_EXTRA,
     };
 
     if (gdk < SPICE_N_ELEMENTS(map)) {
@@ -2066,6 +2073,14 @@ static int button_mask_gdk_to_spice(int gdk)
         spice |= SPICE_MOUSE_BUTTON_MASK_MIDDLE;
     if (gdk & GDK_BUTTON3_MASK)
         spice |= SPICE_MOUSE_BUTTON_MASK_RIGHT;
+    /* Currently, GDK does not define any mask for buttons 8 and 9
+       For X11, no mask is set at all for those buttons:
+       https://gitlab.gnome.org/GNOME/gtk/-/blob/4fff68355a22027791258b900f1f39ca1226b669/gdk/x11/gdkdevice-xi2.c#L639
+       For Wayland, masks of (1 << 15) and (1 << 16) respectively are set:
+       https://gitlab.gnome.org/GNOME/gtk/-/blob/4fff68355a22027791258b900f1f39ca1226b669/gdk/wayland/gdkdevice-wayland.c#L1703
+       While the situation is unclear, completely ignore the GTK mask for SIDE and EXTRA events.
+       Also, note that callers of this function already set/unset the mask based on the button
+       code, so not setting the mask here shouldn't have a noticeable impact anyway */
     return spice;
 }
 
@@ -2287,7 +2302,7 @@ static void size_allocate(GtkWidget *widget, GtkAllocation *conf, gpointer data)
         d->ww = conf->width;
         d->wh = conf->height;
         recalc_geometry(widget);
-#if HAVE_EGL
+#ifdef HAVE_EGL
         if (egl_enabled(d)) {
             gint scale_factor = gtk_widget_get_scale_factor(widget);
             spice_egl_resize_display(display, conf->width * scale_factor, conf->height * scale_factor);
@@ -2336,7 +2351,7 @@ static void unrealize(GtkWidget *widget)
     SpiceDisplay *display = SPICE_DISPLAY(widget);
 
     spice_cairo_image_destroy(display);
-#if HAVE_EGL
+#ifdef HAVE_EGL
     if (display->priv->egl.context_ready) {
         spice_egl_unrealize_display(display);
     }
@@ -2687,7 +2702,7 @@ static void update_area(SpiceDisplay *display,
         .height = height
     };
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     if (egl_enabled(d)) {
         const SpiceGlScanout *so =
             spice_display_channel_get_gl_scanout(d->display);
@@ -2934,7 +2949,7 @@ static void invalidate(SpiceChannel *channel,
         .height = h
     };
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     set_egl_enabled(display, false);
 #endif
 
@@ -3029,6 +3044,11 @@ static void update_mouse_cursor(SpiceDisplay *display)
     gint scale_factor;
     gint hotspot_x, hotspot_y;
 
+#if defined(GDK_WINDOWING_X11) || defined(GDK_WINDOWING_WAYLAND)
+    GdkDisplay *gdk_display = gtk_widget_get_display(GTK_WIDGET(display));
+    bool should_unscale_hotspot = false;
+#endif
+
     if (G_UNLIKELY(!d->mouse_pixbuf)) {
         return;
     }
@@ -3065,9 +3085,17 @@ static void update_mouse_cursor(SpiceDisplay *display)
     hotspot_x = d->mouse_hotspot.x * scale;
     hotspot_y = d->mouse_hotspot.y * scale;
 
-#ifdef GDK_WINDOWING_X11
+#if defined(GDK_WINDOWING_X11)
+    should_unscale_hotspot |= GDK_IS_X11_DISPLAY(gdk_display);
+#endif
+
+#if defined(GDK_WINDOWING_WAYLAND)
+    should_unscale_hotspot |= GDK_IS_WAYLAND_DISPLAY(gdk_display);
+#endif
+
+#if defined(GDK_WINDOWING_X11) || defined(GDK_WINDOWING_WAYLAND)
     /* undo hotspot scaling in gdkcursor */
-    if (GDK_IS_X11_DISPLAY(gtk_widget_get_display(GTK_WIDGET(display)))) {
+    if (should_unscale_hotspot) {
         hotspot_x /= scale_factor;
         hotspot_y /= scale_factor;
     }
@@ -3078,7 +3106,7 @@ static void update_mouse_cursor(SpiceDisplay *display)
                                          hotspot_x,
                                          hotspot_y);
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     if (egl_enabled(d))
         spice_egl_cursor_set(display);
 #endif
@@ -3137,7 +3165,7 @@ void spice_display_get_scaling(SpiceDisplay *display,
         wh = fbh;
     }
 
-    if (!spice_cairo_is_scaled(display)) {
+    if (!spice_allow_scaling(display)) {
         s = 1.0;
         x = 0;
         y = 0;
@@ -3259,7 +3287,7 @@ static void inputs_channel_event(SpiceChannel *channel, SpiceChannelEvent event,
     spice_display_set_keypress_delay(display, delay);
 }
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
 G_GNUC_INTERNAL
 void spice_display_widget_gl_scanout(SpiceDisplay *display)
 {
@@ -3385,7 +3413,11 @@ static void channel_new(SpiceSession *s, SpiceChannel *channel, SpiceDisplay *di
         spice_g_signal_connect_object(channel, "notify::gl-scanout",
                                       G_CALLBACK(spice_display_widget_gl_scanout),
                                       display, G_CONNECT_SWAPPED);
-#if HAVE_EGL
+
+        if (spice_display_channel_get_gl_scanout(d->display)) {
+            spice_display_widget_gl_scanout(display);
+        }
+#ifdef HAVE_EGL
         spice_g_signal_connect_object(channel, "gl-draw",
                                       G_CALLBACK(gl_draw), display, G_CONNECT_SWAPPED);
 #endif
@@ -3513,6 +3545,21 @@ SpiceDisplay* spice_display_new_with_monitor(SpiceSession *session, gint channel
 }
 
 /**
+ * spice_display_keyboard_ungrab:
+ * @display: a #SpiceDisplay
+ *
+ * Ungrab the keyboard.
+ *
+ * Since: 0.40
+ **/
+void spice_display_keyboard_ungrab(SpiceDisplay *display)
+{
+    g_return_if_fail(SPICE_IS_DISPLAY(display));
+
+    try_keyboard_ungrab(display);
+}
+
+/**
  * spice_display_mouse_ungrab:
  * @display: a #SpiceDisplay
  *
@@ -3546,7 +3593,7 @@ GdkPixbuf *spice_display_get_pixbuf(SpiceDisplay *display)
     g_return_val_if_fail(d != NULL, NULL);
     g_return_val_if_fail(d->display != NULL, NULL);
 
-#if HAVE_EGL
+#ifdef HAVE_EGL
     if (egl_enabled(d)) {
         GdkPixbuf *tmp;
 

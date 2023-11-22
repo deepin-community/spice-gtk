@@ -45,7 +45,7 @@ option('usb-ids-path',
 option('coroutine',
     type : 'combo',
     value : 'auto',
-    choices : ['auto', 'ucontext', 'gthread', 'winfiber'],
+    choices : ['auto', 'ucontext', 'libucontext', 'gthread', 'winfiber'],
     description : 'Use ucontext or GThread for coroutines')
 
 option('introspection',
@@ -76,6 +76,10 @@ option('opus',
 option('smartcard',
     type : 'feature',
     description : 'Enable smartcard support')
+
+option('egl',
+    type : 'feature',
+    description: 'EGL support')
 
 option('gtk_doc',
        type : 'feature',

@@ -1,3 +1,40 @@
+v0.42
+=====
+
+- !115 - Fix compilation on win32 with EGL
+- !114 - spice-widget: fix hotspot position on Wayland/HiDPI
+- !112 - meson: Allow building on a Wayland-only environment
+- !110 - usb-backend: Fix devices not being enumerated
+- !108 - spicy: Add keyboard shortcuts for copy/paste sync
+- Require meson >= 0.56
+
+v0.41
+=====
+
+- !100 - meson: move cairo dependency to GTK build only
+- !102 - coroutine: add support for libucontext
+- !105 - build against phodav-3.0/soup-3.0
+- fix openssl 3.0 warnings
+- meson: fix invalid use of subproject()
+
+v0.40
+=====
+
+- Fix usbid parsing regression introduced in !78 (v0.39)
+- !91 - Fix crash with division by 0 [rhbz#1941627]
+- !97 - #157 - Fix detecting pyparsing module
+- Add API to allocate SpiceUsbDevice (for Android)
+  spice_usb_device_manager_allocate_device_for_file_descriptor()
+- !93 - #137 - add support for TLS-SNI
+- !92 - Support USB emulation for MacOS
+- !96 - Support side mouse buttons
+- !85 - #75 - add spice_display_keyboard_ungrab()
+- !81 - GL fix warning fix and improve scanout logic
+- !84 - Fix leak and warnings in gstaudio and spicy
+- !86, !87, !90 - Several introspection fixes and improvements
+
+[rhbz#1941627]: https://bugzilla.redhat.com/show_bug.cgi?id=1941627
+
 v0.39
 =====
 
@@ -8,7 +45,7 @@ v0.39
 - !48 - Add support to Wayland mouse in server mode
 - !49 - #126 - Read all SASL buffer
 - !54 - Add Copy & Paste support over Webdav
-- !58 - Improve input and display on HiDPI displays 
+- !58 - Improve input and display on HiDPI displays
 - !64 - Add support for Physical size display
 - !69 - Fix leak on Display's surface
 - !74 - Fix read overflow on (not seamless) migration code

@@ -2,13 +2,13 @@
 # project definition
 #
 project('spice-gtk', 'c',
-         version : run_command('build-aux/git-version-gen', '@0@/.tarball-version'.format(meson.source_root()), check : true).stdout().strip(),
+         version : run_command('build-aux/git-version-gen', '@0@/.tarball-version'.format(meson.project_source_root()), check : true).stdout().strip(),
          license : 'LGPLv2.1',
-         meson_version : '>= 0.53',
+         meson_version : '>= 0.56',
          default_options : ['buildtype=debugoptimized',
                             'warning_level=2'])
 
-meson.add_dist_script('build-aux/meson-dist', meson.project_version(), meson.source_root())
+meson.add_dist_script('build-aux/meson-dist', meson.project_version(), meson.project_source_root())
 summary_info = {}
 
 #
@@ -49,9 +49,10 @@ spice_gtk_config_data.merge_from(spice_common.get_variable('spice_common_config_
 spice_glib_deps += spice_common.get_variable('spice_common_client_dep')
 spice_protocol_version = spice_common.get_variable('spice_protocol_version')
 
-subproject('keycodemapdb')
-keymapgen = files('subprojects/keycodemapdb/tools/keymap-gen')
-keymapcsv = files('subprojects/keycodemapdb/data/keymaps.csv')
+keycodemapdb = subproject('keycodemapdb')
+
+keymapgen = find_program('keymap-gen')
+keymapcsv = keycodemapdb.get_variable('keymaps_csv')
 
 #
 # check for system headers
@@ -63,7 +64,8 @@ headers = [
   'sys/types.h',
   'netinet/in.h',
   'arpa/inet.h',
-  'valgrind/valgrind.h'
+  'valgrind/valgrind.h',
+  'sys/disk.h'
 ]
 
 foreach header : headers
@@ -72,12 +74,8 @@ foreach header : headers
   endif
 endforeach
 
-# FIXME: Add a config option to validate spice-widget-egl being built or not
-spice_gtk_has_egl = compiler.has_header('epoxy/egl.h')
-if spice_gtk_has_egl
-    spice_gtk_config_data.set('HAVE_EPOXY_EGL_H', '1')
-    spice_gtk_config_data.set('HAVE_EGL', '1') # FIXME: Use single define?
-endif
+spice_gtk_has_egl = compiler.has_header('epoxy/egl.h', required: get_option('egl'))
+spice_gtk_config_data.set('HAVE_EGL', spice_gtk_has_egl)
 
 #
 # check for system functions
@@ -107,8 +105,8 @@ foreach dep, version : deps
 endforeach
 
 # mandatory dependencies, without specific version requirement
-# TODO: specify minimum version for cairo, jpeg and zlib?
-deps = ['cairo', 'libjpeg', 'zlib', 'json-glib-1.0']
+# TODO: specify minimum version for jpeg and zlib?
+deps = ['libjpeg', 'zlib', 'json-glib-1.0']
 if host_machine.system() == 'windows'
   deps += 'gio-windows-2.0'
 else
@@ -121,7 +119,7 @@ endforeach
 
 deps = []
 if host_machine.system() == 'windows'
-  deps += ['libws2_32', 'libgdi32', 'libcomctl32']
+  deps += ['ws2_32', 'gdi32', 'comctl32']
 endif
 
 foreach dep : deps
@@ -149,9 +147,12 @@ d = dependency('gtk+-3.0', version : '>= @0@'.format(gtk_version_required),
 summary_info += {'gtk': d.found()}
 if d.found()
   spice_gtk_deps += d
+  spice_gtk_deps += dependency('epoxy', required: spice_gtk_has_egl)
   if host_machine.system() != 'windows'
-    spice_gtk_deps += dependency('epoxy')
-    spice_gtk_deps += dependency('x11')
+    d = dependency('x11', required: false)
+    if d.found()
+      spice_gtk_deps += d
+    endif
     d = dependency('libva-x11', required: false)
     if d.found()
       spice_gtk_deps += d
@@ -169,9 +170,9 @@ if host_machine.system() != 'windows' and spice_gtk_has_gtk and compiler.has_hea
   summary_info += {'wayland-protocols': d.found()}
   if d.found()
     spice_gtk_config_data.set('HAVE_WAYLAND_PROTOCOLS', '1')
-    dir_wp_base = d.get_pkgconfig_variable('pkgdatadir')
+    dir_wp_base = d.get_variable(pkgconfig: 'pkgdatadir')
     dep_scanner = dependency('wayland-scanner', native: true)
-    prog_scanner = find_program(dep_scanner.get_pkgconfig_variable('wayland_scanner'))
+    prog_scanner = find_program(dep_scanner.get_variable(pkgconfig: 'wayland_scanner'))
 
     wayland_libs_version_required = '1.17.0'
     spice_wayland_deps += dependency('wayland-server', version : '>= @0@'.format(wayland_libs_version_required))
@@ -183,11 +184,17 @@ endif
 
 # webdav
 spice_gtk_has_phodav = false
-phodav_dep = dependency('libphodav-2.0', required: get_option('webdav'))
-summary_info += {'webdav': phodav_dep.found()}
+phodav_dep = dependency('libphodav-3.0', required: false)
+if not phodav_dep.found()
+  phodav_dep = dependency('libphodav-2.0', required: get_option('webdav'))
+endif
 if phodav_dep.found()
   spice_glib_deps += phodav_dep
-  d = dependency('libsoup-2.4', version : '>= 2.49.91', required: get_option('webdav'))
+  if phodav_dep.name() == 'libphodav-3.0'
+    d = dependency('libsoup-3.0', version : '>= 3.0', required: get_option('webdav'))
+  else
+    d = dependency('libsoup-2.4', version : '>= 2.49.91', required: get_option('webdav'))
+  endif
   if d.found()
     spice_glib_deps += d
     spice_gtk_config_data.set('USE_PHODAV', '1')
@@ -197,6 +204,7 @@ if phodav_dep.found()
     endif
   endif
 endif
+summary_info += {'webdav': spice_gtk_has_phodav}
 
 gstreamer_version = '1.10'
 gstreamer_version_info = '>= @0@'.format(gstreamer_version)
@@ -244,7 +252,7 @@ spice_gtk_has_polkit = false
 d = dependency('polkit-gobject-1', version : '>= 0.101', required : get_option('polkit'))
 summary_info += {'polkit': d.found()}
 if d.found()
-  spice_gtk_policy_dir = d.get_pkgconfig_variable('policydir')
+  spice_gtk_policy_dir = d.get_variable(pkgconfig: 'policydir')
 
   # TODO:  With 'auto', we should just disable polkit support if this is missing.
   if not compiler.has_function('acl_get_file')
@@ -285,7 +293,7 @@ spice_gtk_usb_ids_path = get_option('usb-ids-path')
 if spice_gtk_usb_ids_path.strip() == ''
   usbutils = dependency('usbutils', required : false)
   if usbutils.found()
-    spice_gtk_usb_ids_path = usbutils.get_pkgconfig_variable('usbids')
+    spice_gtk_usb_ids_path = usbutils.get_variable(pkgconfig: 'usbids')
   endif
 endif
 summary_info += {'usb-ids-path': spice_gtk_usb_ids_path}
@@ -316,6 +324,13 @@ if spice_gtk_coroutine == 'ucontext'
     spice_gtk_config_data.set('_XOPEN_SOURCE', '1')
   endif
   endif
+
+if spice_gtk_coroutine == 'libucontext'
+  d = dependency('libucontext')
+  spice_glib_deps += d
+  spice_gtk_config_data.set('WITH_UCONTEXT', '1')
+  spice_gtk_config_data.set('HAVE_LIBUCONTEXT', '1')
+endif
 
 if spice_gtk_coroutine == 'gthread'
   spice_gtk_config_data.set('WITH_GTHREAD', '1')

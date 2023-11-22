@@ -79,11 +79,11 @@ class RootMarshallingSource(MarshallingSource):
             writer.begin_block()
             scope = writer.get_subwriter()
 
-        scope.variable_def(self.c_type + " *", self.base_var)
+        scope.variable_def("const " + self.c_type + " *", self.base_var)
         if not self.reuse_scope:
             scope.newline()
 
-        writer.assign(self.base_var, "(%s *)%s" % (self.c_type, self.pointer))
+        writer.assign(self.base_var, "(const %s *)%s" % (self.c_type, self.pointer))
         writer.newline()
 
         if self.reuse_scope:
@@ -134,10 +134,11 @@ def write_marshal_ptr_function(writer, target_type, is_helper=True):
     writer.header = header
     writer.out_prefix = ""
     if target_type.is_array():
-        scope = writer.function(marshal_function, "SPICE_GNUC_UNUSED static void", "SpiceMarshaller *m, %s_t *ptr, unsigned count" % target_type.element_type.primitive_type() + names_args)
+        scope = writer.function(marshal_function, "SPICE_GNUC_UNUSED static void",
+                                "SpiceMarshaller *m, const %s_t *ptr, unsigned count" % target_type.element_type.primitive_type() + names_args)
     else:
-        scope = writer.function(marshal_function, "void", "SpiceMarshaller *m, %s *ptr" % target_type.c_type() + names_args)
-        header.writeln("void " + marshal_function + "(SpiceMarshaller *m, %s *msg" % target_type.c_type() + names_args + ");")
+        scope = writer.function(marshal_function, "void", "SpiceMarshaller *m, const %s *ptr" % target_type.c_type() + names_args)
+        header.writeln("void " + marshal_function + "(SpiceMarshaller *m, const %s *msg" % target_type.c_type() + names_args + ");")
     scope.variable_def("SPICE_GNUC_UNUSED SpiceMarshaller *", "m2")
 
     for n in names:
@@ -179,8 +180,6 @@ def get_array_size(array, container_src):
             return "((((uint64_t) %s + 7U) / 8U ) * %s)" % (width_v, rows_v)
         else:
             return "((((uint64_t) %s * %s + 7U) / 8U ) * %s)" % (bpp, width_v, rows_v)
-    elif array.is_bytes_length():
-        return container_src.get_ref(array.size[2])
     else:
         raise NotImplementedError("TODO array size type not handled yet: %s"  % array)
 
@@ -192,26 +191,20 @@ def write_array_marshaller(writer, member, array, container_src, scope):
         return
 
     nelements = get_array_size(array, container_src)
-    is_byte_size = array.is_bytes_length()
 
     element = "%s__element" % member.name
 
     if not scope.variable_defined(element):
         if array.has_attr("ptr_array"):
-            stars = " **"
+            type_formart = "%s * const *"
         else:
-            stars = " *"
-        scope.variable_def(element_type.c_type() + stars, element)
+            type_formart = "const %s * "
+        scope.variable_def(type_formart % element_type.c_type(), element)
     element_array = element
     if array.has_attr("ptr_array"):
         element = "*" + element
 
     writer.assign(element_array, container_src.get_ref(member.name))
-
-    if is_byte_size:
-        size_start_var = "%s__size_start" % member.name
-        scope.variable_def("size_t", size_start_var)
-        writer.assign(size_start_var, "spice_marshaller_get_size(m)")
 
     with writer.index() as index:
         with writer.for_loop(index, nelements) as array_scope:
@@ -225,12 +218,6 @@ def write_array_marshaller(writer, member, array, container_src, scope):
                 writer.todo("array element unhandled type").newline()
 
             writer.statement("%s++" % element_array)
-
-    if is_byte_size:
-        size_var = member.container.lookup_member(array.size[1])
-        size_var_type = size_var.member_type
-        var = "%s__ref" % array.size[1]
-        writer.statement("spice_marshaller_set_%s(m, %s, spice_marshaller_get_size(m) - %s)" % (size_var_type.primitive_type(), var, size_start_var))
 
 def write_pointer_marshaller(writer, member, src):
     t = member.member_type
@@ -356,13 +343,13 @@ def write_message_marshaller(writer, message, private):
             #matches "msgc" and appends "msg_" if this fails causing
             #inconsistencies
             message_name = "msg_" + message_name
-        writer.header.writeln("void (*" + message_name + ")(SpiceMarshaller *m, %s *msg" % message.c_type() + names_args + ");")
+        writer.header.writeln("void (*" + message_name + ")(SpiceMarshaller *m, const %s *msg" % message.c_type() + names_args + ");")
     else:
-        writer.header.writeln("void " + function_name + "(SpiceMarshaller *m, %s *msg" % message.c_type() + names_args + ");")
+        writer.header.writeln("void " + function_name + "(SpiceMarshaller *m, const %s *msg" % message.c_type() + names_args + ");")
 
     scope = writer.function(function_name,
                             "static void" if private else "void",
-                            "SPICE_GNUC_UNUSED SpiceMarshaller *m, SPICE_GNUC_UNUSED %s *msg" % message.c_type() + names_args)
+                            "SPICE_GNUC_UNUSED SpiceMarshaller *m, SPICE_GNUC_UNUSED const %s *msg" % message.c_type() + names_args)
     scope.variable_def("SPICE_GNUC_UNUSED SpiceMarshaller *", "m2")
 
     for n in names:

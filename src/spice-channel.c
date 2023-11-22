@@ -46,6 +46,8 @@
 
 #include "gio-coroutine.h"
 
+G_STATIC_ASSERT(sizeof(SpiceChannelClass) == sizeof(GObjectClass) + 19 * sizeof(gpointer));
+
 static void spice_channel_handle_msg(SpiceChannel *channel, SpiceMsgIn *msg);
 static void spice_channel_write_msg(SpiceChannel *channel, SpiceMsgOut *out);
 static void spice_channel_send_link(SpiceChannel *channel);
@@ -1213,49 +1215,94 @@ static void spice_channel_failed_spice_authentication(SpiceChannel *channel,
 static SpiceChannelEvent spice_channel_send_spice_ticket(SpiceChannel *channel)
 {
     SpiceChannelPrivate *c = channel->priv;
-    EVP_PKEY *pubkey;
-    int nRSASize;
-    BIO *bioKey;
-    RSA *rsa;
-    char *password;
-    uint8_t *encrypted;
-    int rc;
+    EVP_PKEY *pubkey = NULL;
+    size_t nRSASize;
+    BIO *bioKey = NULL;
+    char *password = NULL;
+    uint8_t *encrypted = NULL;
     SpiceChannelEvent ret = SPICE_CHANNEL_ERROR_LINK;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000
+    EVP_PKEY_CTX *ctx = NULL;
+#else
+    RSA *rsa = NULL;
+    int rc;
+#endif
 
-    bioKey = BIO_new(BIO_s_mem());
-    g_return_val_if_fail(bioKey != NULL, ret);
-
-    BIO_write(bioKey, c->peer_msg->pub_key, SPICE_TICKET_PUBKEY_BYTES);
-    pubkey = d2i_PUBKEY_bio(bioKey, NULL);
-    g_return_val_if_fail(pubkey != NULL, ret);
-
-    rsa = EVP_PKEY_get0_RSA(pubkey);
-    nRSASize = RSA_size(rsa);
-
-    encrypted = g_alloca(nRSASize);
-    /*
-      The use of RSA encryption limit the potential maximum password length.
-      for RSA_PKCS1_OAEP_PADDING it is RSA_size(rsa) - 41.
-    */
     g_object_get(c->session, "password", &password, NULL);
-    if (password == NULL)
+    if (password == NULL) {
         password = g_strdup("");
+    }
     if (strlen(password) > SPICE_MAX_PASSWORD_LENGTH) {
         spice_channel_failed_spice_authentication(channel, TRUE);
         ret = SPICE_CHANNEL_ERROR_AUTH;
         goto cleanup;
     }
+
+    bioKey = BIO_new(BIO_s_mem());
+    g_warn_if_fail(bioKey != NULL);
+    if (bioKey == NULL) {
+        goto cleanup;
+    }
+
+    BIO_write(bioKey, c->peer_msg->pub_key, SPICE_TICKET_PUBKEY_BYTES);
+    pubkey = d2i_PUBKEY_bio(bioKey, NULL);
+    g_warn_if_fail(pubkey != NULL);
+    if (pubkey == NULL) {
+        goto cleanup;
+    }
+
+    /*
+      The use of RSA encryption limit the potential maximum password length.
+      for RSA_PKCS1_OAEP_PADDING it is RSA_size(rsa) - 41.
+    */
+#if OPENSSL_VERSION_NUMBER >= 0x30000000
+    ctx = EVP_PKEY_CTX_new(pubkey, NULL);
+    if (ctx == NULL ||
+        EVP_PKEY_encrypt_init(ctx) <= 0 ||
+        EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0 ||
+        EVP_PKEY_encrypt(ctx, NULL, &nRSASize, (uint8_t *)password,
+                         strlen(password) + 1) <= 0) {
+        g_warning("Failed to initialize public key algorithm context");
+        goto cleanup;
+    }
+
+    encrypted = g_alloca(nRSASize);
+    if (EVP_PKEY_encrypt(ctx, encrypted, &nRSASize, (uint8_t *)password,
+                         strlen(password) + 1) <= 0) {
+        g_warning("Failed to encrypt");
+        goto cleanup;
+    }
+#else
+    rsa = EVP_PKEY_get0_RSA(pubkey);
+    nRSASize = RSA_size(rsa);
+
+    encrypted = g_alloca(nRSASize);
     rc = RSA_public_encrypt(strlen(password) + 1, (uint8_t*)password,
                             encrypted, rsa, RSA_PKCS1_OAEP_PADDING);
-    g_warn_if_fail(rc > 0);
+    if (rc <= 0) {
+        g_warning("Failed to encrypt");
+        goto cleanup;
+    }
+#endif
 
     spice_channel_write(channel, encrypted, nRSASize);
     ret = SPICE_CHANNEL_NONE;
 
 cleanup:
-    memset(encrypted, 0, nRSASize);
-    EVP_PKEY_free(pubkey);
-    BIO_free(bioKey);
+    if (encrypted) {
+        memset(encrypted, 0, nRSASize);
+    }
+    if (pubkey) {
+        EVP_PKEY_free(pubkey);
+    }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000
+    if (ctx) {
+        EVP_PKEY_CTX_free(ctx);
+    }
+#endif
+    if (bioKey) {
+        BIO_free(bioKey);
+    }
     g_free(password);
     return ret;
 }
@@ -2630,6 +2677,19 @@ reconnect:
                 (char*)pubkey, pubkey_len,
                 spice_session_get_cert_subject(c->session));
         }
+
+#if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
+        {
+            const char *hostname = spice_session_get_host(c->session);
+            // check is not an ip address
+            GInetAddress * ip = g_inet_address_new_from_string(hostname);
+            if (ip == NULL) {
+                SSL_set_tlsext_host_name(c->ssl, hostname);
+            } else {
+                g_object_unref(ip);
+            }
+        }
+#endif
 
 ssl_reconnect:
         rc = SSL_connect(c->ssl);

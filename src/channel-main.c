@@ -646,7 +646,7 @@ static void spice_main_channel_class_init(SpiceMainChannelClass *klass)
      * SpiceMainChannel::main-clipboard:
      * @main: the #SpiceMainChannel that emitted the signal
      * @type: the VD_AGENT_CLIPBOARD data type
-     * @data: clipboard data
+     * @data: (element-type guint8) (array length=size): clipboard data
      * @size: size of @data in bytes
      *
      * Provides guest clipboard data requested by spice_main_clipboard_request().
@@ -669,7 +669,7 @@ static void spice_main_channel_class_init(SpiceMainChannelClass *klass)
      * @main: the #SpiceMainChannel that emitted the signal
      * @selection: a VD_AGENT_CLIPBOARD_SELECTION clipboard
      * @type: the VD_AGENT_CLIPBOARD data type
-     * @data: clipboard data
+     * @data: (element-type guint8) (array length=size): clipboard data
      * @size: size of @data in bytes
      *
      * Informs that clipboard selection data are available.
@@ -690,7 +690,7 @@ static void spice_main_channel_class_init(SpiceMainChannelClass *klass)
     /**
      * SpiceMainChannel::main-clipboard-grab:
      * @main: the #SpiceMainChannel that emitted the signal
-     * @types: the VD_AGENT_CLIPBOARD data types
+     * @types: (element-type guint32) (array length=ntypes): the VD_AGENT_CLIPBOARD data types
      * @ntypes: the number of @types
      *
      * Inform when clipboard data is available from the guest, and for
@@ -713,7 +713,7 @@ static void spice_main_channel_class_init(SpiceMainChannelClass *klass)
      * SpiceMainChannel::main-clipboard-selection-grab:
      * @main: the #SpiceMainChannel that emitted the signal
      * @selection: a VD_AGENT_CLIPBOARD_SELECTION clipboard
-     * @types: the VD_AGENT_CLIPBOARD data types
+     * @types: (element-type guint32) (array length=ntypes): the VD_AGENT_CLIPBOARD data types
      * @ntypes: the number of @types
      *
      * Inform when clipboard data is available from the guest, and for
@@ -2396,14 +2396,11 @@ static gboolean main_migrate_handshake_done(spice_migrate *mig)
 /* main context */
 static gboolean migrate_connect(spice_migrate *mig)
 {
-    SpiceChannelPrivate  *c;
     int port, sport;
     const char *host;
 
     g_return_val_if_fail(mig != NULL, FALSE);
     g_return_val_if_fail(mig->nchannels == 0, FALSE);
-    c = SPICE_CHANNEL(mig->src_channel)->priv;
-    g_return_val_if_fail(c != NULL, FALSE);
     g_return_val_if_fail(mig->session != NULL, FALSE);
 
     spice_session_set_migration_state(mig->session, SPICE_SESSION_MIGRATION_CONNECTING);
@@ -2883,7 +2880,7 @@ void spice_main_set_display(SpiceMainChannel *channel, int id,
 /**
  * spice_main_clipboard_grab:
  * @channel: a #SpiceMainChannel
- * @types: an array of #VD_AGENT_CLIPBOARD types available in the clipboard
+ * @types: (transfer none)(array length=ntypes): an array of #VD_AGENT_CLIPBOARD types available in the clipboard
  * @ntypes: the number of @types
  *
  * Grab the guest clipboard, with #VD_AGENT_CLIPBOARD @types.
@@ -2900,7 +2897,7 @@ void spice_main_clipboard_grab(SpiceMainChannel *channel, guint32 *types, int nt
  * spice_main_clipboard_selection_grab:
  * @channel: a #SpiceMainChannel
  * @selection: one of the clipboard #VD_AGENT_CLIPBOARD_SELECTION_*
- * @types: an array of #VD_AGENT_CLIPBOARD types available in the clipboard
+ * @types: (transfer none)(array length=ntypes): an array of #VD_AGENT_CLIPBOARD types available in the clipboard
  * @ntypes: the number of @types
  *
  * Grab the guest clipboard, with #VD_AGENT_CLIPBOARD @types.
@@ -2918,7 +2915,7 @@ void spice_main_clipboard_selection_grab(SpiceMainChannel *channel, guint select
  * spice_main_channel_clipboard_selection_grab:
  * @channel: a #SpiceMainChannel
  * @selection: one of the clipboard #VD_AGENT_CLIPBOARD_SELECTION_*
- * @types: an array of #VD_AGENT_CLIPBOARD types available in the clipboard
+ * @types: (transfer none)(array length=ntypes): an array of #VD_AGENT_CLIPBOARD types available in the clipboard
  * @ntypes: the number of @types
  *
  * Grab the guest clipboard, with #VD_AGENT_CLIPBOARD @types.
@@ -2993,7 +2990,7 @@ void spice_main_channel_clipboard_selection_release(SpiceMainChannel *channel, g
  * spice_main_clipboard_notify:
  * @channel: a #SpiceMainChannel
  * @type: a #VD_AGENT_CLIPBOARD type
- * @data: clipboard data
+ * @data: (array length=size): clipboard data
  * @size: data length in bytes
  *
  * Send the clipboard data to the guest.
@@ -3012,7 +3009,7 @@ void spice_main_clipboard_notify(SpiceMainChannel *channel,
  * @channel: a #SpiceMainChannel
  * @selection: one of the clipboard #VD_AGENT_CLIPBOARD_SELECTION_*
  * @type: a #VD_AGENT_CLIPBOARD type
- * @data: clipboard data
+ * @data: (array length=size): clipboard data
  * @size: data length in bytes
  *
  * Send the clipboard data to the guest.
@@ -3031,7 +3028,7 @@ void spice_main_clipboard_selection_notify(SpiceMainChannel *channel, guint sele
  * @channel: a #SpiceMainChannel
  * @selection: one of the clipboard #VD_AGENT_CLIPBOARD_SELECTION_*
  * @type: a #VD_AGENT_CLIPBOARD type
- * @data: clipboard data
+ * @data: (array length=size): clipboard data
  * @size: data length in bytes
  *
  * Send the clipboard data to the guest.
