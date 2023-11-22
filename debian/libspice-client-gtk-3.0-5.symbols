@@ -5,6 +5,7 @@ libspice-client-gtk-3.0.so.5 libspice-client-gtk-3.0-5 #MINVER#
  spice_display_get_pixbuf@SPICEGTK_1 0.32
  spice_display_get_type@SPICEGTK_1 0.32
  spice_display_key_event_get_type@SPICEGTK_1 0.32
+ spice_display_keyboard_ungrab@SPICEGTK_1 0.41
  spice_display_mouse_ungrab@SPICEGTK_1 0.32
  spice_display_new@SPICEGTK_1 0.32
  spice_display_new_with_monitor@SPICEGTK_1 0.32

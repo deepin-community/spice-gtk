@@ -93,7 +93,7 @@ struct _SpiceUsbDeviceManagerClass
      * If adding fields to this struct, remove corresponding
      * amount of padding to avoid changing overall struct size
      */
-    gchar _spice_reserved[SPICE_RESERVED_PADDING];
+    gpointer _spice_reserved[10];
 };
 
 GType spice_usb_device_get_type(void);
@@ -151,6 +151,11 @@ spice_usb_device_manager_create_shared_cd_device(SpiceUsbDeviceManager *manager,
 gboolean
 spice_usb_device_manager_is_device_shared_cd(SpiceUsbDeviceManager *manager,
                                              SpiceUsbDevice *device);
+
+SpiceUsbDevice *
+spice_usb_device_manager_allocate_device_for_file_descriptor(SpiceUsbDeviceManager *manager,
+                                                             int file_descriptor,
+                                                             GError **err);
 
 G_END_DECLS
 

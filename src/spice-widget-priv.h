@@ -22,7 +22,7 @@
 #include <windows.h>
 #endif
 
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef HAVE_EGL
 #include <epoxy/egl.h>
 #endif
 
@@ -133,7 +133,7 @@ struct _SpiceDisplayPrivate {
     int                     x11_accel_denominator;
     int                     x11_threshold;
 #endif
-#if HAVE_EGL
+#ifdef HAVE_EGL
     struct {
         gboolean            context_ready;
         gboolean            enabled;
@@ -158,7 +158,7 @@ struct _SpiceDisplayPrivate {
 int      spice_cairo_image_create                 (SpiceDisplay *display);
 void     spice_cairo_image_destroy                (SpiceDisplay *display);
 void     spice_cairo_draw_event                   (SpiceDisplay *display, cairo_t *cr);
-gboolean spice_cairo_is_scaled                    (SpiceDisplay *display);
+gboolean spice_allow_scaling                      (SpiceDisplay *display);
 void     spice_display_get_scaling           (SpiceDisplay *display, double *s, int *x, int *y, int *w, int *h);
 gboolean spice_egl_init                      (SpiceDisplay *display, GError **err);
 gboolean spice_egl_realize_display           (SpiceDisplay *display, GdkWindow *win,

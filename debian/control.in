@@ -1,0 +1,162 @@
+Source: spice-gtk
+Section: misc
+Priority: optional
+Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
+Uploaders: @GNOME_TEAM@, Lin Qigang <lqi254@protonmail.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-sequence-gir,
+               dh-sequence-gnome,
+               gtk-doc-tools (>= 1.14),
+               libacl1-dev,
+               libcacard-dev (>= 0.1.2),
+               libcairo2-dev (>= 1.2.0),
+               libcap-ng-dev [linux-any],
+               libepoxy-dev,
+               libgdk-pixbuf2.0-doc,
+               libgirepository1.0-dev,
+               libglib2.0-dev,
+               libglib2.0-doc,
+               libgstreamer-plugins-base1.0-dev (>= 1.10),
+               libgstreamer1.0-dev (>= 1.10),
+               libgtk-3-dev (>= 3.22),
+               libjpeg-dev,
+               libjson-glib-dev,
+               liblz4-dev,
+               libopus-dev,
+               libphodav-3.0-dev,
+               libpixman-1-dev (>= 0.17.7),
+               libpolkit-agent-1-dev,
+               libpolkit-gobject-1-dev,
+               libsasl2-dev,
+               libspice-protocol-dev (>= 0.14.3),
+               libssl-dev,
+               libtext-csv-perl,
+               libusb-1.0-0-dev (>= 2:1.0.21),
+               libusbredirhost-dev (>= 0.7.1),
+               libva-dev [linux-any],
+               meson (>= 0.56),
+               pkg-config,
+               python3-pyparsing,
+               python3-six,
+               python3:any,
+               valac (>= 0.18)
+Standards-Version: 4.6.2
+Homepage: https://www.spice-space.org/
+Vcs-Git: https://salsa.debian.org/gnome-team/spice-gtk.git
+Vcs-Browser: https://salsa.debian.org/gnome-team/spice-gtk
+Rules-Requires-Root: no
+
+Package: spice-client-gtk
+Architecture: any
+Depends: libspice-client-glib-2.0-8 (= ${binary:Version}),
+         libspice-client-gtk-3.0-5 (= ${binary:Version}),
+         libusbredirhost1 (>= 0.7.1),
+         libusbredirparser1 (>= 0.7.1),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: Simple clients for interacting with SPICE servers
+ Simple clients for interacting with SPICE servers. This package
+ includes:
+ .
+ spicy - GTK+ based SPICE client tool
+ spicy-screenshot - SPICE screen-shot capture tool
+ spicy-stats - SPICE connection details display tool
+
+Package: spice-client-glib-usb-acl-helper
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Breaks: libspice-client-glib-2.0-8 (<< 0.37-3~)
+Description: Helper tool to validate usb ACLs
+ When passthrough USB devices to VMs, spice-client-glib-usb-acl-helper
+ is called to validate usb ACLs via policykit policy
+
+Package: libspice-client-glib-2.0-8
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: spice-client-glib-usb-acl-helper (= ${binary:Version}),
+         usb.ids,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Suggests: gstreamer1.0-libav,
+          gstreamer1.0-plugins-bad,
+          gstreamer1.0-plugins-base,
+          gstreamer1.0-plugins-good
+Breaks: virt-viewer (<< 11.0-2~),
+        gnome-boxes (<< 42.3),
+        remmina-plugin-spice (<< 1.4.28),
+Description: GObject for communicating with Spice servers (runtime library)
+ libspice-glib4 provides glib objects for spice protocol
+ decoding and surface rendering
+ .
+ This package provide the runtime library.
+
+Package: gir1.2-spiceclientglib-2.0
+Section: introspection
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${gir:Depends}, ${misc:Depends}
+Breaks: gir1.2-spice-client-glib-2.0 (<< 0.34)
+Description: GObject for communicating with Spice servers (GObject-Introspection)
+ libspice-glib4 provides glib objects for spice protocol
+ decoding and surface rendering
+ .
+ This package contains the GObject-introspection data in binary typelib format.
+
+Package: libspice-client-glib-2.0-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: gir1.2-spiceclientglib-2.0 (= ${binary:Version}),
+         libglib2.0-dev (>= 2.46),
+         libspice-client-glib-2.0-8 (= ${binary:Version}),
+         libspice-protocol-dev (>= 0.14.1),
+         ${misc:Depends}
+Description: GObject for communicating with Spice servers (development files)
+ libspice-glib4 provides glib objects for spice protocol
+ decoding and surface rendering
+ .
+ This package provide the development headers.
+
+Package: libspice-client-gtk-3.0-5
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: GTK3 widget for SPICE clients (runtime library)
+ libspice-gtk3 provides gtk3 widget to show spice display
+ and accept user input.
+ .
+ This package provide the runtime library.
+
+Package: gir1.2-spiceclientgtk-3.0
+Section: introspection
+Architecture: any
+Multi-Arch: same
+Depends: ${gir:Depends}, ${misc:Depends}
+Breaks: gir1.2-spice-client-gtk-3.0 (<< 0.34)
+Description: GTK3 widget for SPICE clients (GObject-Introspection)
+ libspice-gtk3 provides gtk3 widget to show spice display
+ and accept user input.
+ .
+ This package contains the GObject-introspection data in binary typelib format.
+
+Package: libspice-client-gtk-3.0-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: gir1.2-spiceclientgtk-3.0 (= ${binary:Version}),
+         libglib2.0-dev (>= 2.46),
+         libgtk-3-dev (>= 3.22),
+         libspice-client-glib-2.0-dev (= ${binary:Version}),
+         libspice-client-gtk-3.0-5 (= ${binary:Version}),
+         ${misc:Depends}
+Description: GTK3 widget for SPICE clients (development files)
+ libspice-gtk3 provides gtk3 widget to show spice display
+ and accept user input.
+ .
+ This package provide the development headers.

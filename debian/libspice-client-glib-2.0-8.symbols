@@ -151,6 +151,7 @@ libspice-client-glib-2.0.so.8 libspice-client-glib-2.0-8 #MINVER#
  spice_usb_device_get_description@SPICEGTK_1 0.13
  spice_usb_device_get_libusb_device@SPICEGTK_1 0.28
  spice_usb_device_get_type@SPICEGTK_1 0.13
+ spice_usb_device_manager_allocate_device_for_file_descriptor@SPICEGTK_1 0.41
  spice_usb_device_manager_can_redirect_device@SPICEGTK_1 0.13
  spice_usb_device_manager_connect_device_async@SPICEGTK_1 0.13
  spice_usb_device_manager_connect_device_finish@SPICEGTK_1 0.13

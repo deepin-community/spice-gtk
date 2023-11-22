@@ -70,15 +70,6 @@ Files: subprojects/spice-common/common/snd_codec.*
 Copyright: Copyright (C) 2013 Jeremy White <jwhite@codeweavers.com>
 License: LGPL-2.1+
 
-Files: src/wocky-http-proxy.c
-Copyright: Copyright (C) 2010 Collabora, Ltd.
-           Copyright (C) 2014 Red Hat, Inc.
-License: LGPL-2.1+
-
-Files: src/wocky-http-proxy.h
-Copyright: Copyright (C) 2010 Collabora, Ltd.
-License: LGPL-2.1+
-
 License: LGPL-2.1+
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public

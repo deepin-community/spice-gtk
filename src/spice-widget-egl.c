@@ -32,6 +32,9 @@
 #ifdef GDK_WINDOWING_WAYLAND
 #include <gdk/gdkwayland.h>
 #endif
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+#endif
 
 #define VERTS_ARRAY_SIZE (sizeof(GLfloat) * 4 * 4)
 #define TEX_ARRAY_SIZE (sizeof(GLfloat) * 4 * 2)
@@ -67,16 +70,16 @@ static const char *spice_egl_fragment_src =     \
 ";
 
 static void apply_ortho(guint mproj, float left, float right,
-                        float bottom, float top, float near, float far)
+                        float bottom, float top, float _near, float _far)
 
 {
     float a = 2.0f / (right - left);
     float b = 2.0f / (top - bottom);
-    float c = -2.0f / (far - near);
+    float c = -2.0f / (_far - _near);
 
     float tx = - (right + left) / (right - left);
     float ty = - (top + bottom) / (top - bottom);
-    float tz = - (far + near) / (far - near);
+    float tz = - (_far + _near) / (_far - _near);
 
     float ortho[16] = {
         a, 0, 0, 0,
@@ -214,6 +217,11 @@ gboolean spice_egl_init(SpiceDisplay *display, GError **err)
 #ifdef GDK_WINDOWING_X11
     if (GDK_IS_X11_DISPLAY(gdk_dpy)) {
         dpy = (EGLNativeDisplayType)gdk_x11_display_get_xdisplay(gdk_dpy);
+    }
+#endif
+#ifdef GDK_WINDOWING_WIN32
+    if (GDK_IS_WIN32_DISPLAY(gdk_dpy)) {
+        dpy = (EGLNativeDisplayType)EGL_DEFAULT_DISPLAY; /* or perhaps wglGetCurrentDC? */
     }
 #endif
 
@@ -431,7 +439,7 @@ void spice_egl_resize_display(SpiceDisplay *display, int w, int h)
     SpiceDisplayPrivate *d = display->priv;
     int prog;
 
-    if (!gl_make_current(display, NULL))
+    if (!d->egl.context_ready || !gl_make_current(display, NULL))
         return;
 
     glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
